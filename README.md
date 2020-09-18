@@ -1,4 +1,18 @@
-# Deep Racer
+# To Run
+
+- Clone the repo into catkin workspace.
+- Build using the command ```catkin build```.
+- Run the launch file : ```roslaunch deepracer_simulation racecar.launch world_name:=medium_track```.
+- Run the controller : ```rosrun deepracer_simulation straight_line_controller.py```.
+
+
+
+
+
+
+
+# Deep Racer : 
+ORIGINAL README, Look above for modified README ^
 
 This Sample Application runs a simulation which trains a reinforcement learning (RL) model to drive a car around a track.
 
