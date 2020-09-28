@@ -77,7 +77,7 @@ def servo_commands():
     heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.00001))
     
     #print("read yaw2",yaw)
-    while not (err<0.5) and (rospy.is_shutdown()):
+    while not (rospy.is_shutdown()):
         """    
         print("====position=====",pos[0],pos[1])
         speed_control = PID_control.PID(0.000001,0,0.000001)
