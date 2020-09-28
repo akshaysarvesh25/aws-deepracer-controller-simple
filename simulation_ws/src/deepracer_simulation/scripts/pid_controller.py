@@ -6,6 +6,7 @@ from std_msgs.msg import Float32
 from std_msgs.msg import Float64
 from ackermann_msgs.msg import AckermannDriveStamped
 from gazebo_msgs.msg import ModelStates
+import tf
 
 flag_move = 0
 
@@ -21,7 +22,17 @@ pub_pos_right_steering_hinge = None
 x_pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/output',AckermannDriveStamped,queue_size=1)
 
 def set_throttle_steer(data):
-    print(data)
+    
+    quaternion = (
+    data.pose[1].orientation.x,
+    data.pose[1].orientation.y,
+    data.pose[1].orientation.z,
+    data.pose[1].orientation.w)
+    euler = tf.transformations.euler_from_quaternion(quaternion)
+    yaw = euler[2]
+
+    
+    print(yaw)
     msg_ack = AckermannDriveStamped()
     
 
