@@ -7,10 +7,14 @@ from std_msgs.msg import Float32
 from std_msgs.msg import Float64
 from ackermann_msgs.msg import AckermannDriveStamped
 from gazebo_msgs.msg import ModelStates
+<<<<<<< HEAD
 from deepracer_msgs.msg import Progress
 import PID_control
 import tf
 import pandas as pd 
+=======
+import tf
+>>>>>>> Adding a a method to find yaw angle from pose of the robot
 
 flag_move = 0
 
@@ -52,8 +56,24 @@ def set_position(data):
         servo_commands()
         
 
+<<<<<<< HEAD
 def control_car(pos,yaw):
     #print("Navigating to",x_des, y_des)
+=======
+def set_throttle_steer(data):
+    
+    quaternion = (
+    data.pose[1].orientation.x,
+    data.pose[1].orientation.y,
+    data.pose[1].orientation.z,
+    data.pose[1].orientation.w)
+    euler = tf.transformations.euler_from_quaternion(quaternion)
+    yaw = euler[2]
+
+    
+    print(yaw)
+    msg_ack = AckermannDriveStamped()
+>>>>>>> Adding a a method to find yaw angle from pose of the robot
     
     msg = AckermannDriveStamped()
     #print("====position=====",pos[0],pos[1])
