@@ -12,8 +12,8 @@ import PID_control
 import tf
 
 flag_move = 0
-x_des = 10
-y_des = 10
+x_des = 5  
+y_des = 5 
 x_pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/output',AckermannDriveStamped,queue_size=1)
 throttle = 0.0
 heading = 0.0
@@ -33,13 +33,13 @@ def set_position(data):
     euler = tf.transformations.euler_from_quaternion(quaternion)
     yaw = euler[2]
 
-    print(yaw)
-    """
+    #print(yaw)
+    
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     #heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.00001))
-    if not (err<0.5):
+    if not (err<0.1):
         control_car(pos,yaw)
-    """
+    
 
 
 def set_throttle_steer(data):
@@ -64,7 +64,7 @@ def control_car(pos,yaw):
     
     msg = AckermannDriveStamped()
     print("====position=====",pos[0],pos[1])
-    speed_control = PID_control.PID(0.000001,0,0.000001)
+    speed_control = PID_control.PID(0.00001,0,0.00001)
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     throttle = speed_control.Update(err)
     #print("distance:", err)
@@ -74,10 +74,10 @@ def control_car(pos,yaw):
     steer_control = PID_control.PID(0.000001,0,0.0000001)
     heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.01))
     steer = steer_control.Update(heading-yaw)
-    #print("yaw:",yaw)
-    #print("heading:",heading)
-    #print("steer_angle:",heading-yaw)
-    #print("steer:",steer)
+    print("yaw:",yaw)
+    print("heading:",heading)
+    print("steer_angle:",heading-yaw)
+    print("steer:",steer)
     
    
     #print("========throttle signal=======",throttle)
