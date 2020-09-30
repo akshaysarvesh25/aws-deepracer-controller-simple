@@ -37,8 +37,11 @@ def set_position(data):
     
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     #heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.00001))
-    if not (err<0.1):
+    if not (err<0.5):
         control_car(pos,yaw)
+    else:
+        print("Stopping car...")
+        stop_car()
     
 
 
@@ -64,12 +67,12 @@ def control_car(pos,yaw):
     
     msg = AckermannDriveStamped()
     print("====position=====",pos[0],pos[1])
-    speed_control = PID_control.PID(0.00001,0,0.00001)
+    speed_control = PID_control.PID(0.000001,0,0.000001)
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     throttle = speed_control.Update(err)
-    #print("distance:", err)
-    #print("throttle:",throttle)
-    print("yaw:",yaw)
+    print("distance:", err)
+    print("throttle:",throttle)
+    #print("yaw:",yaw)
     
     steer_control = PID_control.PID(0.000001,0,0.0000001)
     heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.01))
@@ -89,6 +92,12 @@ def control_car(pos,yaw):
     x_pub.publish(msg)
     #time.sleep(1)
     print("==============")
+
+def stop_car():
+    msg = AckermannDriveStamped()
+    msg.drive.speed = 0
+    x_pub.publish(msg)
+    print("Goal Reached!")
 
 
 def servo_commands():
