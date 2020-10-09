@@ -43,7 +43,7 @@ def set_position(data):
             
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     #heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.00001)
-    if not (err<0.5 or ((x_des-pos[0])<0.5) or ((y_des-pos[1])<0.5)):
+    if not (err<0.5 or ((x_des-pos[0])<0.3) or ((y_des-pos[1])<0.3)):
         control_car(pos,yaw)
     else:
         print("Stopping car...")
@@ -53,23 +53,23 @@ def set_position(data):
         
 
 def control_car(pos,yaw):
-    print("Navigating to",x_des, y_des)
+    #print("Navigating to",x_des, y_des)
     
     msg = AckermannDriveStamped()
-    print("====position=====",pos[0],pos[1])
+    #print("====position=====",pos[0],pos[1])
     speed_control = PID_control.PID(1e-6,0,1e-6)
     err = math.sqrt((x_des-pos[0])**2+(y_des-pos[1])**2)
     throttle = speed_control.Update(err)
-    print("distance:", err)
-    print("throttle:",throttle)
+    #print("distance:", err)
+    #print("throttle:",throttle)
     
     
     steer_control = PID_control.PID(1e-8,0,1e-7)
     heading = math.atan((y_des-pos[1])/(x_des-pos[0]+0.01))
     steer = steer_control.Update(heading-yaw)
-    print("yaw:",yaw)
-    print("steer_angle:",heading-yaw)
-    print("steer:",steer)
+    #print("yaw:",yaw)
+    #print("steer_angle:",heading-yaw)
+    #print("steer:",steer)
     
    
     #print("========throttle signal=======",throttle)
@@ -80,7 +80,7 @@ def control_car(pos,yaw):
     msg.drive.steering_angle = steer
     x_pub.publish(msg)
     #time.sleep(1)
-    print("==============")
+    #print("==============")
 
 def stop_car():
     msg = AckermannDriveStamped()
@@ -91,22 +91,24 @@ def stop_car():
     print("Goal Reached!") 
 
 def servo_commands():
-    print("Enter Waypoints:")
+    print("Car is at :",pos[0],pos[1])
+    #print("Enter Waypoints:")
     #time.sleep(2)
     global x_des
     global y_des
     global sub
     global count
-    count +=1
+    #count +=1
     df.columns = df.columns.str.strip()
 
     
-        
-    x_des = float(input())
-    y_des = float(input())
-    #x_des = (df.X[8*count]/4)-0.125
-    #y_des = (df.Y[8*count]/4)-0.125
-    
+    #print("Car is at :",pos[0],pos[1])    
+    #x_des = float(input())
+    #y_des = float(input())
+    x_des = (df.X[count])
+    y_des = (df.Y[count])
+    print("Navigating to:",x_des, y_des)
+    count +=1
     #rospy.init_node('servo_commands', anonymous=True)   
     msg = AckermannDriveStamped()
     #rospy.Subscriber("/progress", Progress, set_throttle_steer)
@@ -134,7 +136,7 @@ if __name__ == '__main__':
         rospy.init_node('servo_commands', anonymous=True)
         
         global df
-        df = pd.read_csv('route.csv',delim_whitespace=True)
+        df = pd.read_csv('route_smooth.csv',delim_whitespace=True)
         
         servo_commands()
     except rospy.ROSInterruptException:
