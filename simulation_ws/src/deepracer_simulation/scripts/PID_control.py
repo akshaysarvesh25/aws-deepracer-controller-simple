@@ -35,8 +35,15 @@ class PID:
         self.previous_time = current_time
         self.previous_error = error
 
+        if(self.Ci>500):
+            self.Ci = 500
+
+        if(self.Ci<-500):
+            self.Ci = -500
+
         return (
             (self.Kp * self.Cp)    # proportional term
             + (self.Ki * self.Ci)  # integral term
             + (self.Kd * self.Cd)  # derivative term
         )
+
