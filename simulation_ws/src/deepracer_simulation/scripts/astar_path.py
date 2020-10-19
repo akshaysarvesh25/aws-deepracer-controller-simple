@@ -24,6 +24,8 @@ from matplotlib.pyplot import figure
 from scipy.signal import savgol_filter
 
 import pandas as pd
+import os
+import json
  
 
 ##############################################################################
@@ -269,6 +271,44 @@ for i in range(len(route)):
 #print(route)
 
 
+def get_obstacle_coordinates(graph):
+    #print("here")
+    #print(graph)
+    adj_matrix = np.asmatrix(graph)
+    adj_matrix = np.delete(graph,(0),axis=0)
+    adj_matrix = np.delete(adj_matrix,(-1),axis=0)
+    adj_matrix = np.delete(adj_matrix,(-1),axis=1)
+    adj_matrix = np.delete(adj_matrix,(0),axis=1)
+    print(pow(len(adj_matrix),2))
+    obstacles = []
+    for i in range(len(adj_matrix)):
+        for j in range(len(adj_matrix)):
+            if adj_matrix[i][j] == 1:
+                #print(i,j)
+                if(i==0 or j == 0):
+                    obstacles.append([i+1,j+1])
+                elif(adj_matrix[i+1][j]==0 or adj_matrix[i-1][j]==0 or adj_matrix[i][j+1]==0 or adj_matrix[i][j-1] == 0):
+                    obstacles.append([i+1,j+1])
+
+    print(len(obstacles))
+   
+    for i in range(len(obstacles)):
+        plt.plot(obstacles[i][1],obstacles[i][0],'.')
+        plt.title("Obstacle boundary used for adding obstacle constraint")
+        #plt.hold(True)
+    plt.show()
+    
+    #print(obstacles[:,0])
+    if os.path.isfile("obstacles_a_star.txt"):
+        os.remove("obstacles_a_star.txt")
+    #np.savetxt("obstacles_a_star.txt",(obstacles[:,0],obstacles[:,1]),fmt=%d)
+    with open('obstacles_a_star.txt','w') as f:
+        for item in obstacles:
+            f.write(str(item[0])+" "+str(item[1])+"\n")
+    
+    #x = np.loadtxt("obstacles_a_star.txt")
+
+                
 ##############################################################################
 
 # plot the path
@@ -310,6 +350,7 @@ y_f = savgol_filter(y_coords, 11, 3)
 df = pd.DataFrame({"X" : x_f, "Y" : y_f})
 df.to_csv("route.csv", index=False)
 
+get_obstacle_coordinates(grid)
 
 ax.plot(y_f,x_f, color = "red")
 #ax.plot(y_coords,x_coords, color = "black")
