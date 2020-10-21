@@ -95,6 +95,70 @@ def astar(array, start, goal):
 
 #########################A-star##############################################
 
+def get_straight_course2(dl,y_coords,x_coords):
+    ax = y_coords
+    ay = x_coords
+    cx, cy, cyaw, ck, s = cubic_spline_planner.calc_spline_course(
+        ax, ay, ds=dl)
+
+    return cx, cy, cyaw, ck
+
+class State:
+    def __init__(self, x=0.0, y=0.0, yaw=0.0):
+        self.x = x
+        self.y = y
+        self.yaw = yaw
+        self.predelta = None
+
+def pi_2_pi(angle):
+    while(angle > math.pi):
+        angle = angle - 2.0 * math.pi
+
+    while(angle < -math.pi):
+        angle = angle + 2.0 * math.pi
+
+    return angle 
+
+def calc_nearest_index(state, cx, cy, cyaw, pind):
+    N_IND_SEARCH = 10
+
+    dx = [state.x - icx for icx in cx[pind:(pind + N_IND_SEARCH)]]
+    dy = [state.y - icy for icy in cy[pind:(pind + N_IND_SEARCH)]]
+
+    d = [idx ** 2 + idy ** 2 for (idx, idy) in zip(dx, dy)]
+
+    mind = min(d)
+
+    ind = d.index(mind) + pind
+
+    mind = math.sqrt(mind)
+
+    dxl = cx[ind] - state.x
+    dyl = cy[ind] - state.y
+
+    angle = pi_2_pi(cyaw[ind] - math.atan2(dyl, dxl))
+    if angle < 0:
+        mind *= -1
+
+    return ind, mind
+
+def smooth_yaw(yaw):
+
+    for i in range(len(yaw) - 1):
+        dyaw = yaw[i + 1] - yaw[i]
+
+        while dyaw >= math.pi / 2.0:
+            yaw[i + 1] -= math.pi * 2.0
+            dyaw = yaw[i + 1] - yaw[i]
+
+        while dyaw <= -math.pi / 2.0:
+            yaw[i + 1] += math.pi * 2.0
+            dyaw = yaw[i + 1] - yaw[i]
+
+    return yaw
+
+############################Parameters###########################################
+
 flag_move = 0
  
 x_pub = rospy.Publisher('/vesc/low_level/ackermann_cmd_mux/output',AckermannDriveStamped,queue_size=1)
@@ -129,14 +193,14 @@ x_f = savgol_filter(x_coords, 31, 3)
 y_f = savgol_filter(y_coords, 31, 3)
 
 cx, cy, cyaw, ck = get_straight_course2(dl,y_f,x_f)
-initial_state = State(x=cx[0], y=cy[0], yaw=1.57)
+state = State(x=cx[0], y=cy[0], yaw=1.57)
 goal = [cx[-1], cy[-1]]
 if state.yaw - cyaw[0] >= math.pi:
     state.yaw -= math.pi * 2.0
 elif state.yaw - cyaw[0] <= -math.pi:
     state.yaw += math.pi * 2.0
 
-time = 0.0
+
 x = [state.x]
 y = [state.y]
 yaw = [state.yaw]
@@ -188,22 +252,9 @@ MAX_DSTEER = np.deg2rad(30.0)  # maximum steering speed [rad/s]
 MAX_SPEED = 7.2 / 3.6  # maximum speed [m/s]
 MIN_SPEED = -20.0 / 3.6  # minimum speed [m/s]
 MAX_ACCEL = 1.0  # maximum accel [m/ss]
-
-def get_straight_course2(dl,y_coords,x_coords):
-    ax = y_coords
-    ay = x_coords
-    cx, cy, cyaw, ck, s = cubic_spline_planner.calc_spline_course(
-        ax, ay, ds=dl)
-    return cx, cy, cyaw, ck
-
-class State:
-    def __init__(self, x=0.0, y=0.0, yaw=0.0):
-        self.x = x
-        self.y = y
-        self.yaw = yaw
-        self.predelta = None
      
-def set_position(data):         
+def set_position(data):
+    global ov, target_ind, odelta        
     racecar_pose = data.pose[1]
     pos[0] = racecar_pose.position.x
     pos[1] = racecar_pose.position.y
@@ -244,14 +295,7 @@ def set_position(data):
         servo_commands()
     """
 
-def pi_2_pi(angle):
-    while(angle > math.pi):
-        angle = angle - 2.0 * math.pi
-
-    while(angle < -math.pi):
-        angle = angle + 2.0 * math.pi
-
-    return angle        
+       
 
 def control_car(throttle,steer):
         
@@ -303,28 +347,6 @@ def update_state(state, v, delta):
 
 def get_nparray_from_matrix(x):
     return np.array(x).flatten()
-
-def calc_nearest_index(state, cx, cy, cyaw, pind):
-
-    dx = [state.x - icx for icx in cx[pind:(pind + N_IND_SEARCH)]]
-    dy = [state.y - icy for icy in cy[pind:(pind + N_IND_SEARCH)]]
-
-    d = [idx ** 2 + idy ** 2 for (idx, idy) in zip(dx, dy)]
-
-    mind = min(d)
-
-    ind = d.index(mind) + pind
-
-    mind = math.sqrt(mind)
-
-    dxl = cx[ind] - state.x
-    dyl = cy[ind] - state.y
-
-    angle = pi_2_pi(cyaw[ind] - math.atan2(dyl, dxl))
-    if angle < 0:
-        mind *= -1
-
-    return ind, mind
 
 def predict_motion(x0, ov, od, xref):
    
@@ -387,7 +409,7 @@ def linear_mpc_control(xref, xbar, x0, dref, ov):
 
         A, B, C = get_linear_model_matrix(
             ov[0], xbar[2, t], dref[0, t])
-        constraints += [x[:, t + 1] == A @ x[:, t] + B @ u[:, t] + C]
+        constraints += [x[:, t + 1] == A * x[:, t] + B * u[:, t] + C]
 
         if t < (T - 1):
             cost += cvxpy.quad_form(u[:, t + 1] - u[:, t], Rd)
@@ -486,21 +508,6 @@ def check_goal(state, goal):
 
     return False
 
-def smooth_yaw(yaw):
-
-    for i in range(len(yaw) - 1):
-        dyaw = yaw[i + 1] - yaw[i]
-
-        while dyaw >= math.pi / 2.0:
-            yaw[i + 1] -= math.pi * 2.0
-            dyaw = yaw[i + 1] - yaw[i]
-
-        while dyaw <= -math.pi / 2.0:
-            yaw[i + 1] += math.pi * 2.0
-            dyaw = yaw[i + 1] - yaw[i]
-
-    return yaw
-
 def stop_car():
     msg = AckermannDriveStamped()
     msg.drive.speed = 0
@@ -519,10 +526,13 @@ def servo_commands():
     sub = rospy.Subscriber("/gazebo/model_states", ModelStates, set_position)   
 
     while not (rospy.is_shutdown()):
-        print("Running...")
+        time.sleep(1)
      
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
+
+
+
 
 if __name__ == '__main__':
     try:
