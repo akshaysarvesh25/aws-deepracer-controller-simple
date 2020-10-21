@@ -31,7 +31,7 @@ Q = np.diag([1.0, 1.0, 0.5, 0.5])  # state cost matrix
 Qf = Q  # state final matrix
 GOAL_DIS = 3.5  # goal distance
 STOP_SPEED = 0.5 / 3.6  # stop speed
-MAX_TIME = 10.0  # max simulation time
+MAX_TIME = 100.0  # max simulation time
 
 # iterative paramater
 MAX_ITER = 3  # Max iteration
@@ -266,12 +266,7 @@ def linear_mpc_control(xref, xbar, x0, dref):
 
     cost = 0.0
     constraints = []
-    #x_g = [[75 ,75],[65, 65],[0 ,0],[0, 0]]
-    #x = np.array([75 ,75])
-    #y = np.array([65 ,65])
-    #v = np.array([0 ,0])
-    #t = np.array([0 ,0])
-    x_g = np.array([[75, 75],[65,65],[1,1],[0,0]])
+    x_g = np.array([[75, 75],[65,65],[1,1],[0.5,0.5]])
     #x_g = np.stack(x,y)
     print(x_g)
     print(type(xref))
@@ -509,6 +504,8 @@ def get_astar_course(dl):
     df = pd.read_csv('route.csv',delim_whitespace=True)
     ax = df.X
     ay = df.Y
+    #ax = [75,75]
+    #ay = [65,65]
     #ax = [0.0, 1.0, 2.0, 2.5, 3.0, 4.5, 6.0, 7.5, 9.0, 11.0, 12.0, 13.0, 15.0, 17.0]
     #ay = [0.0, 1.0, 2.0, 4.0, 6.0, 8.0, 8.5, 10.5, 12.0, 13.0, 14.0, 15.0, 15.5, 16.0]
     cx, cy, cyaw, ck, s = cubic_spline_planner.calc_spline_course(
