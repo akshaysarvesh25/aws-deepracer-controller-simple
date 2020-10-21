@@ -245,7 +245,7 @@ def linear_mpc_control(goal_1, grid, xbar, x0):
     x0: initial state
     dref: reference steer angle
     """
-    lambda_1 = 10
+    lambda_1 = 20
     #print(goal_1)
     x = cvxpy.Variable((NX, T + 1))
     u = cvxpy.Variable((NU, T))
@@ -261,7 +261,9 @@ def linear_mpc_control(goal_1, grid, xbar, x0):
         if t != 0:
             obst_avoid_goal = max(0,lambda_1-least_dist)
             cost += cvxpy.quad_form(goal_1 - x[:, t], Q)
-            cost+=cvxpy.quad_form(obst_avoid_goal - x1[:,t],Q_1)
+            cost+=(cvxpy.quad_form(obst_avoid_goal - x1[:,t],Q_1))
+            #cubic = cvxpy.square((obst_avoid_goal - x1[:,t])*Q_1)
+            #cost += cubic
 
 
         A, B, C = get_linear_model_matrix(
