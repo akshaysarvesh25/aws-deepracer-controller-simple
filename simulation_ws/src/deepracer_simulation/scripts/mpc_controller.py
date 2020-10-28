@@ -177,7 +177,7 @@ grid[9:17,53:69]=1
 grid[57:65,21:33]=1
 grid[53:61,49:57]=1
 start = (5,5)
-goal = (75,65)
+goal = (30,8)
 route = astar(grid, start, goal)
 route = route + [start]
 route = route[::-1]
@@ -189,18 +189,17 @@ for i in (range(0,len(route))):
     x_coords.append(x)
     y_coords.append(y)
 
-x_f = savgol_filter(x_coords, 31, 3)
-y_f = savgol_filter(y_coords, 31, 3)
+x_f = savgol_filter(x_coords, 15, 3)
+y_f = savgol_filter(y_coords, 15, 3)
 
 cx, cy, cyaw, ck = get_straight_course2(dl,y_f,x_f)
 state = State(x=cx[0], y=cy[0], yaw=1.57)
-goal = [cx[-1], cy[-1]]
+"""
 if state.yaw - cyaw[0] >= math.pi:
     state.yaw -= math.pi * 2.0
 elif state.yaw - cyaw[0] <= -math.pi:
     state.yaw += math.pi * 2.0
-
-
+"""
 x = [state.x]
 y = [state.y]
 yaw = [state.yaw]
@@ -210,7 +209,7 @@ d = [0.0]
 v = [0.0]
 target_ind, _ = calc_nearest_index(state, cx, cy, cyaw, 0)
 
-odelta, ov = [0,0,0,0,0], None
+odelta, ov = None, None
 
 cyaw = smooth_yaw(cyaw)
 
@@ -221,7 +220,7 @@ NU = 2  # a = [accel, steer]
 T = 5  # horizon length
 
 # mpc parameters
-R = np.diag([0.01, 0.01])  # input cost matrix
+R = np.diag([0.01, 1.0])  # input cost matrix
 Rd = np.diag([0.01, 1.0])  # input difference cost matrix
 Q = np.diag([1.0, 1.0, 0.5])  # state cost matrix
 Qf = Q  # state final matrix
@@ -230,13 +229,13 @@ STOP_SPEED = 0.5 / 3.6  # stop speed
 MAX_TIME = 500.0  # max simulation time
 
 # iterative paramter
-MAX_ITER = 3  # Max iteration
-DU_TH = 0.5  # iteration finish param
+MAX_ITER = 1  # Max iteration
+DU_TH = 4.0  # iteration finish param
 
 TARGET_SPEED = 7.2 / 3.6  # [m/s] target speed
 N_IND_SEARCH = 10  # Search index number
 
-DT = 0.05  # [s] time tick
+DT = 1.0  # [s] time tick
 
 # Vehicle parameters
 LENGTH = 0.45  # [m]
@@ -249,7 +248,7 @@ WB = 0.15  # [m]
 
 MAX_STEER = np.deg2rad(30.0)  # maximum steering angle [rad]
 MAX_DSTEER = np.deg2rad(30.0)  # maximum steering speed [rad/s]
-MAX_SPEED = 7.2 / 3.6  # maximum speed [m/s]
+MAX_SPEED = 3.6 / 3.6  # maximum speed [m/s]
 MIN_SPEED = -20.0 / 3.6  # minimum speed [m/s]
 MAX_ACCEL = 1.0  # maximum accel [m/ss]
      
@@ -293,9 +292,7 @@ def set_position(data):
         stop_car()
         sub.unregister()        
         servo_commands()
-    """
-
-       
+    """       
 
 def control_car(throttle,steer):
         
@@ -378,6 +375,7 @@ def iterative_linear_mpc_control(xref, x0, dref, ov, od):
         ov, od, ox, oy, oyaw = linear_mpc_control(xref, xbar, x0, dref, ov)
         print("throttle : ",ov[0],"steer : ",od[0])
         du = sum(abs(ov - pov)) + sum(abs(od - pod))  # calc u change value
+        print(du)
         if du <= DU_TH:
             break
     else:
