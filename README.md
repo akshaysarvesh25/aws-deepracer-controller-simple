@@ -5,14 +5,14 @@
 - Run the launch file : ```roslaunch deepracer_simulation racecar.launch world_name:=medium_track```.
 - Run the controller : ```rosrun deepracer_simulation straight_line_controller.py```.
 
-
-
+## Sources 
+- There is no RPLidar sensor available in the original Gazebo Model. RPLidar sensor added by using plugin(meshes/rplidar.dae, urdf/racecar.xacro, urdf/racecar.gazebo) from Husarion. RPLidar Plugin by Husarion : https://github.com/husarion/rosbot_description
 
 
 
 
 # Deep Racer : 
-ORIGINAL README, Look above for modified README ^
+**ORIGINAL README, Look above for modified README ^**
 
 This Sample Application runs a simulation which trains a reinforcement learning (RL) model to drive a car around a track.
 
